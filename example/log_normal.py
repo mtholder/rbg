@@ -3,9 +3,9 @@ from rbg import generate
 import rbg.var_transform as vt
 from rbg.prob.density import Gamma, Exponential, LogNormal
 observations = [1.3, 2.4, 3.4]
-M = Gamma(alpha=3.0, beta=1.0).create()
+m = Gamma(alpha=3.0, beta=1.0).create()
 sigma = Exponential(_lambda=1.0).create()
-mu = vt.log(M) - vt.power(sigma, 2.0)/2
+mu = vt.log(m) - vt.power(sigma, 2.0)/2
 ln_norm = LogNormal(mu, sigma)
 x = [ln_norm.datum(val) for val in observations]
-generate(ln_norm, file_stem=__file__)
+generate(ln_norm, locals(), file_stem=__file__)

@@ -24,6 +24,12 @@ class ProbabilityDistribution(DagNode):
         return '{}({})'.format(self._NAME, ', '.join(arg_str_list))
     def arg_names(self):
         return self._ARG_NAME_LIST
+    def short_type_name(self):
+        return 'distrib'
+    def _def_in_rev_lang(self):
+        raise NotImplementedError('_def_in_rev_lang in {}'.format(self.__class__.__name__))
+    def write_self_in_rev_lang(self, stream):
+        pass # distributions write themselves using _def_in_rev_lang
 
 class Gamma(ProbabilityDistribution):
     _NAME = 'Gamma'
@@ -33,6 +39,10 @@ class Gamma(ProbabilityDistribution):
             raise ValueError('alpha and beta must be specified for a Gamma')
         ProbabilityDistribution.__init__(self, [alpha, beta])
         self._alpha, self._beta = self._args
+    def short_type_name(self):
+        return 'gamma_d'
+    def _def_in_rev_lang(self):
+        return 'dnGamma({}, {})'.format(self._alpha.var_name, self._beta.var_name)
 
 class Exponential(ProbabilityDistribution):
     _NAME = 'Exponential'
@@ -42,6 +52,10 @@ class Exponential(ProbabilityDistribution):
             raise ValueError('_lambda must be specified for a Exponential')
         ProbabilityDistribution.__init__(self, [_lambda])
         self._lambda = self._args[0]
+    def short_type_name(self):
+        return 'exp_d'
+    def _def_in_rev_lang(self):
+        return 'dnExponential({})'.format(self._lambda.var_name)
 
 class LogNormal(ProbabilityDistribution):
     _NAME = 'LogNormal'
@@ -51,3 +65,7 @@ class LogNormal(ProbabilityDistribution):
             raise ValueError('mu and sigma must be specified for a LogNormal')
         ProbabilityDistribution.__init__(self, [mu, sigma])
         self._mu, self._sigma = self._args
+    def short_type_name(self):
+        return 'lognorm_d'
+    def _def_in_rev_lang(self):
+        return 'dnLnnorm({}, {})'.format(self._mu.var_name, self._sigma.var_name)

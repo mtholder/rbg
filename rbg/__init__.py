@@ -2,14 +2,30 @@ from cStringIO import StringIO
 import codecs
 
 
-def _generate(node, stream):
+def _generate(node, var_name_dict, stream):
     memo = {}
     dag = node.gen_dag(memo)
     nl = dag.sorted_node_list()
+    id2var_name = {}
+    from rbg.node import DagNode
+    for var_name, var in var_name_dict.items():
+        if isinstance(var, DagNode):
+            id2var_name[id(var)] = var_name
+    used_var_names = {}
     for node in nl:
-        node.write(stream, memo)
+        vn = id2var_name.get(id(node))
+        if vn is not None:
+            node._var_name = vn
+            used_var_names[var_name] = node
+    for node in nl:
+        if not node.var_name:
+            vn = node._create_var_name(used_var_names)
+            used_var_names[vn] = node
 
-def generate(node, file_stem=None, file_path=None, file_stream=None):
+    for node in nl:
+        node.write_self_in_rev_lang(stream)
+
+def generate(node, var_name_dict, file_stem=None, file_path=None, file_stream=None):
     ret_str = False
     opened = False
     if file_stream is None:
@@ -26,7 +42,7 @@ def generate(node, file_stem=None, file_path=None, file_stream=None):
             opened = True
             file_stream = codecs.open(file_path, 'w', encoding='utf8')
     try:
-        _generate(node, file_stream)
+        _generate(node, var_name_dict, file_stream)
         if ret_str:
             return file_stream.getvalue()
     finally:

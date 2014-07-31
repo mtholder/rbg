@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+from rbg.util import get_logger
+_LOG = get_logger(__name__)
 
 _add = lambda a, b: a + b
 _sub = lambda a, b: a - b
@@ -16,6 +18,8 @@ class Dag(object):
         self._memo[node_id] = node
         if not node._children:
             self._parentless.append(node_id)
+    def __contains__(self, n):
+        return id(n) in self._memo
 
 _NEXT_INIT_ORDER_INDEX = 0
 class DagNode(object):
@@ -32,22 +36,29 @@ class DagNode(object):
             self._parents = par
         for p in self._parents:
             p._add_child(self)
+    def _base_descrip(self):
+        return 'id={} #par={} #children{}'.format(id(self), len(self._parents), len(self._children))
+    def descrip(self):
+        return 'DagNode {}'.format(self._base_descrip())
+    def brief_descrip(self):
+        return '<{} id={}>'.format(self.__class__.__name__, id(self))
     def _add_child(self, c):
         self._children.append(c)
     def gen_dag(self, memo):
         dag = Dag(memo)
         self._add_to_dag(dag)
         return dag
-    def _add_to_dag(self, dag, avoid_node=None):
-        self._add_node_and_children(dag, child2avoid=avoid_node)
+    def _add_to_dag(self, dag):
+        if self in dag:
+            return
+        _LOG.debug('_add_to_dag for {}'.format(self.descrip()))
+        self._add_node_and_children(dag)
         for p in self._parents:
-            if p is not avoid_node:
-                p._add_to_dag(dag, avoid_node=self)
-    def _add_node_and_children(self, dag, child2avoid=None):
+            p._add_to_dag(dag)
+    def _add_node_and_children(self, dag):
         dag.attempt_add_node(self)
         for c in self._children:
-            if c is not child2avoid:
-                c._add_to_dag(dag, avoid_node=self)
+            c._add_to_dag(dag)
 
 class OperableDagNode(DagNode):
     def __init__(self, par=None):
@@ -75,7 +86,9 @@ class ConstNode(OperableDagNode):
     def __init__(self, value=None):
         OperableDagNode.__init__(self)
         assert value is not None
-        self.value = value
+        self._value = value
+    def descrip(self):
+        return 'ConstNode val={} {}'.format(self._value, self._base_descrip())
 
 class DeterministicNode(OperableDagNode):
     def __init__(self, delegate, op_name, *valist):
@@ -88,6 +101,11 @@ class DeterministicNode(OperableDagNode):
         self._arg_list = a
         self._op_name = op_name
         self._delegate = delegate
+    def descrip(self):
+        arg_str = '[{}]'.format(', '.join([i.brief_descrip() for i in self._arg_list]))
+        pref = 'DeterministicNode operation={}'.format(self._op_name)
+        suff = self._base_descrip()
+        return '{} {} {}'.format(pref, arg_str, suff)
 
 class StochasticNode(OperableDagNode):
     def __init__(self, density=None, probability=None, clamped_value=None, par=None):
@@ -99,3 +117,18 @@ class StochasticNode(OperableDagNode):
         self._clamped_value = clamped_value
     def clamp(self, clamped_value):
         self._clamped_value = clamped_value
+    def descrip(self):
+        pref = 'StochasticNode'
+        if self._clamped_value:
+            pref += ' clamped={}'.format(describe_val_or_node(self._clamped_value))
+        if self._density:
+            p = self._density.brief_descrip()
+        else:
+            p = self._probability.brief_descrip()
+        suff = self._base_descrip()
+        return '{} {} {}'.format(pref, p, suff)
+
+def describe_val_or_node(v):
+    if isinstance(v, DagNode):
+        return v.descrip()
+    return str(v)

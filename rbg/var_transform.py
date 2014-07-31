@@ -9,10 +9,10 @@ def _gen_tvf(left, right, delegate, op_name):
     return DeterministicNode(delegate, op_name, left, right)
 
 def log(v):
-    return _gen_svf(v, math.log, 'log')
+    return _gen_svf(v, math.log, 'ln')
 
 def exp(v):
     return _gen_svf(v, math.exp, 'exp')
 
 def power(base, exponent):
-    return _gen_tvf(base, exponent, pow, 'pow')
+    return _gen_tvf(base, exponent, pow, 'power')

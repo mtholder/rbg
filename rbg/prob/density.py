@@ -68,4 +68,4 @@ class LogNormal(ProbabilityDistribution):
     def short_type_name(self):
         return 'lognorm_d'
     def _def_in_rev_lang(self):
-        return 'dnLnnorm({}, {})'.format(self._mu.var_name, self._sigma.var_name)
+        return 'dnLnorm({}, {})'.format(self._mu.var_name, self._sigma.var_name)

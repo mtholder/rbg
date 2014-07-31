@@ -25,15 +25,15 @@ def _append_subtree_in_postorder(curr, post_list, added, barrier=None):
     while True:
         #_LOG.debug('_append_subtree_in_postorder for {}'.format(curr.brief_descrip()))
         assert isinstance(curr, DagNode)
+        for p in curr._parents:
+            if p not in added:
+                _append_ancsubtree_in_postorder(p, post_list, added)
         if curr not in added:
             if curr is not barrier:
                 curr_next_level_stack.append(curr._children)
                 #_LOG.debug('  added {} to curr_next_level_stack'.format([i.brief_descrip() for i in curr_next_level_stack[-1]]))
             post_list.append(curr)
             added.add(curr)
-        for p in curr._parents:
-            if p not in added:
-                _append_ancsubtree_in_postorder(p, post_list, added)
         while (not curr_sib_stack) and curr_next_level_stack:
             curr_sib_stack = curr_next_level_stack.pop()
             #_LOG.debug('  new curr_sib_stack is now {} '.format([i.brief_descrip() for i in curr_sib_stack]))

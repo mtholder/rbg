@@ -8,4 +8,4 @@ sigma = Exponential(_lambda=1.0).create()
 mu = vt.log(M) - vt.power(sigma, 2.0)/2
 ln_norm = LogNormal(mu, sigma)
 x = [ln_norm.datum(val) for val in observations]
-generate(x, file_stem=__file__)
+generate(ln_norm, file_stem=__file__)

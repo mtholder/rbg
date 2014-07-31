@@ -2,14 +2,10 @@ from cStringIO import StringIO
 import codecs
 
 
-class Memo(object):
-    def __init__(self):
-        pass
-
 def _generate(node, stream):
-    dag = node.gen_dag()
+    memo = {}
+    dag = node.gen_dag(memo)
     nl = dag.sorted_node_list()
-    memo = Memo()
     for node in nl:
         node.write(stream, memo)
 
